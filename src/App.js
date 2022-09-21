@@ -1,71 +1,61 @@
 
 import './App.css';
-import React, {useState, useEffect} from "react";
+import React, {useState} from "react";
+import Header from './components/Header';
 
-const api = {
-  key: "589c656420d6efbc4258dcf22289004e",
-  base: "https://api.openweathermap.org/data/2.5/",
-}
+import AddTaskForm from './components/AddTaskForm';
+import TaskList from './components/TaskList';
+
 
 function App() {
-const [searchInput, setSearchInput] = useState("");
-const [searchCity, setSearchCity] = useState("");
-const [loading, setLoading] = useState(false);
-const [errorMessage, setErrorMessage] = useState("");
-const [weatherInfo, setWeatherInfo] = useState("");
+  const [tasks, setTasks] = useState([
+    {id:"task1", title : "Learn JS", status: 0},
+    {id:"task2", title : "Code a todo list", status: 1},
+  ]);
 
-const handleSubmit = (e)=> {
-  e.preventDefault();
-  setSearchCity(searchInput);
-};
-  
-useEffect(() => {
-  const fetchWeatherData = async ()=>{
-    if (!searchCity) return;
-    setLoading(true);
-    try {
-      const url =  `${api.base}weather?q=${searchCity}&units=metric&APPID=${api.key}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      if (response.ok) {
-        setWeatherInfo(
-          `Location: ${data.name},
-          Country: ${data.sys.country},
-          Weather: ${data.weather[0].description}`
-        );
-        setErrorMessage("");
-      } else {
-        setErrorMessage(data.message)
+  const [showIncomplete, setShowIncomplete] = useState(false);
+  const [newTask, setNewTask] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (newTask) {
+      const task = {
+        id: Date.now(),
+        title: newTask,
+        status: 0,
       }
-    } catch (error) {
-      setErrorMessage(error.message)
+      setTasks([...tasks, task]);
+      setNewTask("");
     }
-    setLoading(false);
-  }
-  fetchWeatherData();
-}, [searchCity])
+  };
 
+  const handleInputChange = (e) => {
+    setNewTask(e.target.value);
+  }
+
+  const setTaskStatus = (taskId, status) => {
+    setTasks (tasks.map(task => {
+      if (task.id === taskId) {
+        return {...task, status: status ? 1 : 0};
+      }
+      return task;
+    })
+    )
+  };
+
+  const removeTask = (taskId) => {
+    setTasks(tasks.filter(task => task.id !== taskId))
+  }
   return (
-    <>
-      <form onSubmit={handleSubmit}>
-        <input 
-        type="text" 
-        placeholder='City' 
-        value={searchInput} 
-        onChange={(e)=>setSearchInput(e.target.value)} />
-        <button>Search</button>
-      </form>
-      {loading?(<div>Loading..</div>):(
-        <>
-         {errorMessage ? (<div>{errorMessage}</div>
-      ):(
-      <div>{weatherInfo}</div>
-      )}
-        </>
-      )}  
-    </>
+    
+<div className="container">
+    <Header title={"Todo List"} subtitle="Get things done (or not)"/>
+    <TaskList tasks={tasks} showIncomplete={showIncomplete} setTaskStatus={setTaskStatus} removeTask={removeTask} setShowIncomplete={setShowIncomplete}/>
+    <AddTaskForm handleSubmit={handleSubmit} handleInputChange={handleInputChange} newTask={newTask} />
+    
+</div>
+
   )
 }
-
 
 export default App;
